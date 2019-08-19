@@ -25,9 +25,8 @@
   [super viewDidLoad];
   
   
-  
-  [self asyncSerial];
-  
+  [self test2];
+
 }
 
 
@@ -88,6 +87,49 @@
    
    */
   
+  
+}
+
+- (void)test1 {
+  
+  dispatch_queue_t queue = dispatch_queue_create("test.com", DISPATCH_QUEUE_SERIAL);
+  
+  dispatch_async(queue, ^{
+    NSLog(@"1");
+    dispatch_async(queue, ^{
+      NSLog(@"2");
+    });
+    dispatch_async(queue, ^{
+      NSLog(@"3");
+    });
+  });
+  NSLog(@"end");
+  
+}
+
+- (void)test2 {
+  
+  dispatch_queue_t queue = dispatch_queue_create("test.com", DISPATCH_QUEUE_SERIAL);
+  
+  dispatch_sync(queue, ^{
+    NSLog(@"1");
+    dispatch_async(queue, ^{
+      NSLog(@"2");
+    });
+    dispatch_async(queue, ^{
+      NSLog(@"3");
+    });
+  });
+  NSLog(@"end");
+  
+  
+  /*
+   
+   打印： 1->end->2,3 随机
+   如果把2 和 3 的异步操作改为 同步操作，那么就会产生死锁
+   
+   */
+
   
 }
 

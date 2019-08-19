@@ -19,7 +19,7 @@
   
   
   
-  [self testFirst];
+  [self testSecond];
   
 }
 
@@ -94,46 +94,51 @@
     NSLog(@"1");
     
     dispatch_async(queue, ^{
-      sleep(1);
-      NSLog(@"2");
-    });
-    
-    NSLog(@"3");
-    
-    dispatch_async(queue, ^{
-      sleep(1);
-      NSLog(@"4");
-    });
-    
-    
-  });
-
-  NSLog(@"end");
-  
-  /*
-   
-   
-   */
-  
-}
-
-//! 并发队列 嵌套
-- (void)testSecond {
-  
-  dispatch_queue_t queue = dispatch_queue_create("com.syncConcurrent", DISPATCH_QUEUE_CONCURRENT);
-  
-  dispatch_sync(queue, ^{
-    NSLog(@"1");
-    
-    dispatch_async(queue, ^{
-//      sleep(2);
+//      sleep(1);
       NSLog(@"2%@",[NSThread currentThread]);
     });
     
     NSLog(@"3");
     
     dispatch_async(queue, ^{
-      sleep(2);
+//      sleep(1);
+      NSLog(@"4%@",[NSThread currentThread]);
+    });
+    
+  });
+
+  NSLog(@"end");
+  
+  /*
+   1. 是同步操作， 阻塞当前主线程， 所以先打印 "1"
+   2. 是 异步操作，不阻塞当前线程，并且已经开辟线程，
+   3. 日志“3" 操作在主线程中，所以会打印 ”3“
+   4. 和”2“一样，异步操作，不阻塞当前线程，并且会开辟新的线程(2 和 4 是并发，互不干扰)
+   5.主线程执行完毕， 打印 "end"
+   
+   所以会先打印  "1" -> "3" - > "end", 然后 "2" 和 "4" 随机打印
+
+   
+   */
+  
+}
+
+//! 并发队列
+- (void)testSecond {
+  
+  dispatch_queue_t queue = dispatch_queue_create("com.syncConcurrent", DISPATCH_QUEUE_CONCURRENT);
+  
+  dispatch_async(queue, ^{
+    sleep(1);
+    NSLog(@"1%@",[NSThread currentThread]);
+    
+    dispatch_sync(queue, ^{
+      NSLog(@"2%@",[NSThread currentThread]);
+    });
+    
+    NSLog(@"3");
+    
+    dispatch_sync(queue, ^{
       NSLog(@"4%@",[NSThread currentThread]);
     });
     
@@ -144,14 +149,10 @@
   
   /*
    分析：
-   1. 是同步操作， 阻塞当前主线程， 所以先打印 “1”
-   2. 是 异步操作，不阻塞当前线程，并且已经开辟线程，
-   3. 日志“3" 操作在主线程中，所以会打印 ”3“
-   4. 和”2“一样，异步操作，不阻塞当前线程，并且会开辟新的线程
-   5.主线程执行完毕， 打印 "end"
-   
-   
-   所以会先打印  "1" -> "3" - > "end", 然后 "2" 和 "4" 随机打印
+   异步不影响主线程，会开辟子线程，所以优先打印 end。
+   子线程的任务都是同步操作，那么在并发队列中，并不需要重新开辟线程，所以依次打印 1，2，3，4
+   最终打印如下
+   "end" -> "1" -> "2" -> "3" -> "4"
    
    
    
