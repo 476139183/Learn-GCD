@@ -25,7 +25,7 @@
   [super viewDidLoad];
   
   
-  [self test2];
+  [self test3];
 
 }
 
@@ -112,12 +112,13 @@
   dispatch_queue_t queue = dispatch_queue_create("test.com", DISPATCH_QUEUE_SERIAL);
   
   dispatch_sync(queue, ^{
-    NSLog(@"1");
+    NSLog(@"1%@",[NSThread currentThread]);
     dispatch_async(queue, ^{
-      NSLog(@"2");
+      NSLog(@"2%@",[NSThread currentThread]);
     });
     dispatch_async(queue, ^{
-      NSLog(@"3");
+      sleep(1);
+      NSLog(@"3%@",[NSThread currentThread]);
     });
   });
   NSLog(@"end");
@@ -125,11 +126,37 @@
   
   /*
    
-   打印： 1->end->2,3 随机
+   打印： 1->end->2->3
+   1 在主线程
+   2和3在同一子线程
    如果把2 和 3 的异步操作改为 同步操作，那么就会产生死锁
    
    */
 
+  
+}
+
+- (void)test3 {
+  
+  dispatch_queue_t queue = dispatch_queue_create("test.com", DISPATCH_QUEUE_CONCURRENT);
+  
+  dispatch_async(queue, ^{
+    NSLog(@"1%@",[NSThread currentThread]);
+    dispatch_sync(queue, ^{
+      sleep(1);
+      NSLog(@"2%@",[NSThread currentThread]);
+    });
+    dispatch_sync(queue, ^{
+      sleep(1);
+      NSLog(@"3%@",[NSThread currentThread]);
+    });
+  });
+  NSLog(@"end");
+
+  /*
+   
+   
+   */
   
 }
 
